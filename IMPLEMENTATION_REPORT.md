@@ -69,3 +69,8 @@ The truck/title opens About. Tracked print information lives in the header; refe
 
 ## New plates and split quantities (2026-10-15)
 Refresh now imports new saved plates automatically, excluding names ending in ignore (case-insensitive). Removing a current plate through this convention retires mappings but preserves job history and accepted counts. Split components have a direct review action and a saved-preparation review indicator. Branch title clicks toggle expansion, including branches already open while another detail is selected. The idle tracked-job header no longer appends an unrelated prior job status; header vertical padding is reduced.
+
+## Completion markers and reload labels (2026-10-15)
+Tree entries at Build, Section, 3MF, Plate and Part levels now show acceptance-based completion symbols: green check (all required quantities accepted), yellow dashed circle (partial), empty circle (not complete), and question mark (quantity or part matching review). Rollups use all descendants, independently of the current filter and recorded plate runs. Empty/unmatched branches cannot become complete. Completion filtering now filters part leaves as well as their ancestor paths.
+
+The controls are labeled Reload Tracking Data (workbook) and Reload Print Details (saved 3MF). The desktop status dock is reduced from 98 to 70 pixels and the redundant Vehicle eyebrow is removed.
