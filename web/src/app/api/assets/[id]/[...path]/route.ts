@@ -1,0 +1,3 @@
+import {build} from '@/server/registry';import {assetFile} from '@/server/assets';
+export const runtime='nodejs';
+export async function GET(_request:Request,context:{params:Promise<{id:string;path:string[]}>}){try{const p=await context.params;const result=await assetFile(await build(p.id),p.path.join('/'));const types:Record<string,string>={'.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.jpeg':'image/jpeg','.glb':'model/gltf-binary'};if(!types[result.extension])return new Response('Not an image or model',{status:404});return new Response(new Uint8Array(result.bytes),{headers:{'Content-Type':types[result.extension],'X-Content-Type-Options':'nosniff','Cache-Control':'no-store'}});}catch{return new Response('Asset not found',{status:404});}}

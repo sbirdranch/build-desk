@@ -24,8 +24,12 @@ def main():
         source=ROOT/'local-inputs/stl-current'/p['source_relative'].replace('\\','/')
         check(hashlib.sha256(source.read_bytes()).hexdigest()==p['sha256'],f'Source changed: {p["id"]}')
     for p in catalog['projects']:
-        source=ROOT/'local-inputs/projects'/p['filename']
-        check(hashlib.sha256(source.read_bytes()).hexdigest()==p['sha256'],f'Project changed: {p["id"]}')
+        sources=[ROOT/'local-inputs/projects'/p['filename']]
+        registry=json.loads((ROOT/'config/builds.json').read_text(encoding='utf-8')) if (ROOT/'config/builds.json').exists() else {'builds':[]}
+        for build in registry['builds']:
+            if (ROOT/build['assets']['root']).resolve()==output.resolve():
+                sources.append(ROOT/'local-data'/build['id']/'asset-refresh'/p['filename'])
+        check(any(source.exists() and hashlib.sha256(source.read_bytes()).hexdigest()==p['sha256'] for source in sources),f'Project snapshot changed: {p["id"]}')
     for record in records:
         for field in ['thumbnail','preview']:
             path=output/record[field]

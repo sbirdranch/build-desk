@@ -10,6 +10,7 @@ import io
 import json
 import math
 import os
+import re
 from pathlib import Path
 import sys
 import time
@@ -41,7 +42,10 @@ def sha(path):
 
 def write_json(path, data):
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    Path(path).write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
+    target=Path(path)
+    temporary=target.with_suffix(target.suffix+'.tmp')
+    temporary.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding='utf-8')
+    os.replace(temporary,target)
 
 def simplify(mesh, faces=22000):
     if len(mesh.faces) <= faces:
@@ -215,20 +219,30 @@ def main():
     ap.add_argument('--keys', type=Path, required=True)
     ap.add_argument('--project-manifest', type=Path, required=True)
     ap.add_argument('--output', type=Path, default=ROOT/'assets/generated')
+    ap.add_argument('--only-project', help='Regenerate one project, retaining all other catalog assets')
     args = ap.parse_args()
     out = args.output.resolve(); out.mkdir(parents=True, exist_ok=True)
     keys = json.loads(args.keys.read_text(encoding='utf-8-sig'))
     manifest = json.loads(args.project_manifest.read_text(encoding='utf-8-sig'))
+    if any(not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',k['id']) for k in keys):
+        raise ValueError('Unsafe part identifier')
+    if any(not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]*',p['project_id']) for p in manifest):
+        raise ValueError('Unsafe project identifier')
     known = {p['filename']: p for p in manifest}
     known.setdefault('745 Beadlock Wheel.3mf', {'project_id': 'K745-3MF001', 'section': 'Beadlock Wheels', 'tracked_plate_numbers': [1]})
-    old = {}
+    old = {}; previous = None
     if (out/'catalog.json').exists():
         previous = json.loads((out/'catalog.json').read_text(encoding='utf-8'))
         if previous.get('renderer') == VERSION: old = {p['id']: p for p in previous['parts']}
     catalog = {'schema_version': 1, 'renderer': VERSION, 'generated_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
                'parts': [], 'projects': [], 'exceptions': [],
                'notice': 'Display assets only. Geometry simplification and shading do not establish print readiness or completion.'}
-    for n, key in enumerate(keys, 1):
+    if args.only_project:
+        if previous is None:
+            raise ValueError('Generate the initial catalog before refreshing a single project')
+        catalog['parts']=previous['parts']
+        catalog['projects']=[p for p in previous['projects'] if p['filename']!=args.only_project]
+    for n, key in enumerate([] if args.only_project else keys, 1):
         source = args.stl_root / Path(key['source'].replace('\\', '/'))
         record = {'id': key['id'], 'name': source.stem, 'section': key['source'].split('\\')[0], 'source_relative': key['source']}
         if not source.exists():
@@ -250,6 +264,8 @@ def main():
             print(f"ERROR {source.name}: {e}", flush=True)
         write_json(out/'catalog.json', catalog)
     for source in sorted(args.projects.glob('*.3mf')):
+        if args.only_project and source.name!=args.only_project:
+            continue
         info = known.get(source.name)
         if info is None:
             catalog['exceptions'].append({'kind': 'untracked_project', 'filename': source.name})

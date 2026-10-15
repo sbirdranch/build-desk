@@ -1,0 +1,29 @@
+# Build Desk architecture
+
+Build Desk is a local browser application owned by IntegratedSA LLC. It runs on the Windows host using Node.js, TypeScript, Next.js and React. There is no Google Cloud account, database server, paid runtime service or cloud authentication in the application.
+
+## Build isolation and extensibility
+
+`config/builds.json` is a small, readable Builds registry. Each entry has a stable URL-safe ID, display name, active/archive flag, data-store descriptor, asset catalog/root, reference-photo catalog, model source directory, workflow defaults and optional printer identity. The picker loads only the selected build's workbook and assets. Entity IDs can repeat across different builds: requests and assets are always scoped by build ID. Two builds cannot accidentally share the same configured workbook. Archiving keeps data readable while blocking writes.
+
+The UI consumes normalized parts, model files, plates, jobs, preparations and audit events. It does not open Excel files or depend on Kitten-specific IDs. `DataStore.load/commit` is the boundary for data adapters. The first adapter is the local Excel Master Tracker schema; another workbook schema, SQLite or a remote store can implement the same contract later. New projects using this schema only require a registry entry, a separate workbook and a matching asset catalog. Project registration is configuration-based in this release; a New Build wizard is not yet provided.
+
+Asset catalogs map stable IDs to thumbnails, still images, display GLBs and reference originals. Each build has its own permitted asset root. The server rejects path traversal and symlinks outside it. Images and geometry load on demand; no full model library or unrelated build is preloaded. Reference photos retain original bytes and color profiles. All model/reference files remain outside Git.
+
+## Excel as the authoritative store
+
+The complete Google export is preserved as an immutable starting backup. The app's active workbook is local; the online sheet is no longer a synchronization target. Existing tabs and stable IDs remain. App saves add three auditable tabs: Build Desk Preparations, Build Desk Result Drafts, and Build Desk Change Log. Print Job History remains the result ledger; opening accepted quantities remain intact.
+
+Saves take a cross-process workbook lock, reject stale file fingerprints, check for an Excel owner file, validate all commands, serialize and re-open the candidate workbook, create a timestamped backup, and replace the workbook atomically. Shared formulas are expanded before editing to preserve independent formulas after a master cell changes. Formula cache values for part counts are updated so audit values are immediately readable; Excel is set to recalculate when opened. Duplicate request IDs replay the recorded result rather than count accepted parts twice. Never run simultaneous manual Excel editing and app saves. The former sheet UI controls are retained for reference; they do not execute Apps Script in the local workbook.
+
+The change log records app actions, timestamp, target, summary, request ID and before/after semantic hashes. It is an audit aid, not a tamper-proof ledger. Manual edits made directly in Excel are detected as outside file changes and reflected on refresh; they are not attributed as app actions. Backups and the original export support integration-test comparisons.
+
+## Workflow and access boundaries
+
+The desktop workspace uses the shared vehicle → section → file → plate → part tree, synchronized breadcrumbs and details. A preparation may be reviewed while another plate prints. One Printing job is allowed per physical printer; a cross-build lock checks other workbooks with the same printer ID before committing a start. Awaiting-inspection jobs do not occupy the printer. Starting snapshots quantities/profile/material/file revision. Completion requires explicit accepted/rejected results; draft counts do not affect accepted totals. Manual custom-layout reprints credit original associations with zero original-plate runs.
+
+The custom Node server determines local versus home-network access from the real TCP socket and overwrites the internal access header. Only loopback clients receive a short-lived process edit token. Mutation endpoints also enforce same-origin requests and that token. Home-network and archived-build requests are read-only on the server, not merely hidden by CSS. Narrow-screen views omit desktop editing. Restarting the service rotates the token. Do not put the app behind a reverse proxy without revisiting this trust boundary.
+
+Desktop file actions use a configured Bambu executable and registered basename within the build's model directory; no arbitrary shell commands or paths are accepted. File refresh imports saved thumbnails and slice metadata, flags untracked candidates without adopting them, and invalidates old rotatable geometry when the file changes. A configured local Python renderer regenerates only the selected project's plate previews, retaining other projects and the part library. A failed renderer leaves old geometry unavailable and reports the error for retry. File fingerprints provide preview cache versions. Header-only slice metadata displays Not yet sliced. Physical slicing and printing remain manual in Bambu Studio.
+
+Printer telemetry is not connected in this release; the footer explicitly says so. Its provider can be implemented separately without conflating device state with job acceptance. Mobile shows only the workbook's last recorded status. Purchasing and Assembly are reserved shell modules, not implemented workflows.

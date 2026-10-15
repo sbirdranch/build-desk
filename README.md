@@ -1,6 +1,37 @@
 # Build Desk
 
-Browser workspace for Kitten 745 production tracking. This first delivery contains the real-geometry asset pipeline, branding, a local image/3D review gallery, and the agreed [application plan](plan.md). It does **not** yet implement production updates, Sheets authentication or printer integration.
+Local browser workspace for managing model builds, starting with Kitten 745 print production. Attributed to **IntegratedSA LLC**. The desktop application uses a section → 3MF → plate → part tree, saved plate preparation, print history, explicit acceptance of completed parts, reference photos and rotatable model previews.
+
+## Open the application
+
+Double-click **Start-Build-Desk.cmd** in this folder. It starts the app in the background and opens **http://127.0.0.1:4174/**. Keep this Windows PC running while using it. Node.js 22 or newer is required; the installed development environment uses Node.js 24.
+
+The active workbook is **local-data/kitten-745/Master Tracker.xlsx**. Its complete original Google export is retained in **local-data/kitten-745/backups/Google-export-2026-10-15.xlsx**. The app does not synchronize with Google Sheets and requires no Google account, paid runtime service or database server. Close Excel before saving from the app. Every app save creates a timestamped workbook backup and records an audit entry.
+
+Home-network clients can view last recorded status using this PC's LAN address on port 4174 when Windows networking permits it. Editing and file actions are restricted to the host's loopback address. Phone layouts are for review only. The app is intended for a trusted home network, not Internet publication or a reverse proxy.
+
+See [UAT_CHECKLIST.md](UAT_CHECKLIST.md) for the first real print walk-through and [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md) for verified behavior and remaining limits. Printer device monitoring is not connected. Purchasing and Assembly are reserved modules.
+
+## Install, build and verify
+
+```powershell
+npm ci --ignore-scripts
+npm --prefix web ci --ignore-scripts
+npm test
+npm --prefix web run typecheck
+npm run app:build
+npm run app:start
+```
+
+After changing application code, rebuild and run `node tools/start-app.mjs --restart`. Logs and the app process ID are under `local-data`. Development mode is `npm run app:dev`; do not run it on the same port as the production app.
+
+Integration tests create disposable workbooks under `web/test-output`, including a clone of the real export when available. They do not add fictional jobs or accepted quantities to the active workbook.
+
+## Add another Build
+
+`config/builds.json` is the small Builds registry. Add a unique ID, display name, active flag, separate workbook, asset root/catalog, model directory, workflow defaults and optional printer identity. Each build loads through the same data-store interface; the initial adapter supports the Master Tracker workbook schema. Builds may reuse part IDs without sharing quantities or history. Assign the same printer ID to builds using the same physical printer to prevent simultaneous tracked starts.
+
+New-build setup is configuration-based; there is no registration wizard yet. A different workbook schema needs an adapter. Models, images and thumbnails are scoped to each build's asset root and load as needed. See [ARCHITECTURE.md](ARCHITECTURE.md) and [plan.md](plan.md).
 
 ## What is versioned
 
@@ -21,7 +52,7 @@ npm ci --ignore-scripts
 npm run preview
 ```
 
-Open http://127.0.0.1:4173. Choose a part or plate and click **Rotate model**. Drag to rotate, wheel to zoom, right-drag to pan. The gallery loads Three.js from the locally installed package; no models are uploaded to an external viewer. It only listens on loopback and exposes preview assets, not the model input folder or credentials. It is intentionally not the later home Wi-Fi service.
+The original asset review gallery remains separately available on http://127.0.0.1:4173. Choose a part or plate and click **Rotate model**. Drag to rotate, wheel to zoom, right-drag to pan. Both viewers load Three.js locally; no models are uploaded to an external viewer. The gallery only listens on loopback; the application on port 4174 supports home-network viewing.
 
 If Python packages are installed under `.python-packages`, the tools detect that folder. Install into the virtual environment by default; the directory override supports the managed desktop environment used for this delivery. If npm's usual cache is unavailable, use `npm ci --ignore-scripts --cache .npm-cache`.
 
@@ -36,7 +67,7 @@ If Python packages are installed under `.python-packages`, the tools detect that
 
 STL geometry is treated in the source library's millimeter convention. GLBs use display coordinates in the same scale and are centered for viewing; do not feed them to a slicer. Simplification and static rendering can soften small features; they do not establish print readiness or replace Bambu Studio. Saved plate images can be stale within a 3MF, so the gallery labels their provenance and shows reconstructed geometry separately.
 
-No new required/completed quantities are inferred. Wheel object membership may be ambiguous because the project contains split objects. Unknown part associations remain null rather than guessed. Custom/manual plates discovered in files remain asset candidates; generating a preview does not add them to the production tracker.
+No new required/completed quantities are inferred. Wheel object membership may be ambiguous because the project contains split objects. Unknown part associations remain null rather than guessed. Custom/manual plates discovered in files remain asset candidates; generating a preview does not add them to the production tracker. Opening Bambu and refreshing a registered 3MF are explicit desktop actions. Refresh imports saved metadata and regenerates plate previews with the configured local Python renderer. Missing usable slice estimates display **Not yet sliced**. NAS access uses the Windows account running the app; Build Desk stores no NAS credentials.
 
 See [plan.md](plan.md) for the full interface and workflow decisions, and [ASSET_REPORT.md](ASSET_REPORT.md) for this batch's verified results.
 
@@ -46,4 +77,4 @@ Build Desk is attributed to **IntegratedSA LLC** in the About dialog. The truck 
 
 ## Finished-product reference photos
 
-Choose **Reference photos** to view the front, passenger-side and rear images provided on the NAS. **Open full-resolution photo** opens a byte-identical copy of the original in a zoomable dialog with Fit, 100%, and zoom controls. Closing the dialog returns to the same selection. The importer retains embedded ICC profiles in lossless browsing previews, with no color grading or generated substitutions. Originals and previews stay Git-excluded under `assets/generated`; identities and import tools are versioned. In the production interface these belong in the Vehicle workspace and remain accessible during part/plate work.
+Choose **References** to view the front, passenger-side and rear images provided on the NAS. Full-resolution photos retain original bytes and open in a zoomable dialog with Fit, 100%, and zoom controls. Closing the dialog returns to the same selection. The importer retains embedded ICC profiles in lossless browsing previews, with no color grading or generated substitutions. Originals and previews stay Git-excluded under `assets/generated`; identities and import tools are versioned. Photos are also available in the Vehicle workspace.
