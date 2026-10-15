@@ -1,0 +1,20 @@
+# Model files, derived geometry and local production metadata stay on this PC.
+local-inputs/
+assets/generated/
+.python-packages/
+.npm-cache/
+.matplotlib-cache/
+node_modules/
+__pycache__/
+.venv/
+.env*
+!.env.example
+*.log
+*.stl
+*.3mf
+*.glb
+*.pem
+*credentials*.json
+*token*.json
+config.local.json
+preview-proof.jpg

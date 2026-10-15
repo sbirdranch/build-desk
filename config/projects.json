@@ -1,0 +1,75 @@
+[
+  {
+    "project_id": "K745-3MF001",
+    "section": "Beadlock Wheels",
+    "filename": "745 Beadlock Wheel.3mf",
+    "tracked_plate_numbers": [
+      1
+    ]
+  },
+  {
+    "project_id": "K745-3MF003",
+    "section": "Cabin",
+    "filename": "K745_Cabin_PETG_v02.3mf",
+    "tracked_plate_numbers": [
+      1,
+      2,
+      3
+    ]
+  },
+  {
+    "project_id": "K745-3MF004",
+    "section": "Front Chassis",
+    "filename": "K745_FrontChassis_PETG_v02.3mf",
+    "tracked_plate_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ]
+  },
+  {
+    "project_id": "K745-3MF005",
+    "section": "Rear Chassis 745",
+    "filename": "K745_RearChassis745_PETG_v02.3mf",
+    "tracked_plate_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ]
+  },
+  {
+    "project_id": "K745-3MF006",
+    "section": "TipperBox 745",
+    "filename": "K745_TipperBox745_PETG_v02.3mf",
+    "tracked_plate_numbers": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ]
+  },
+  {
+    "project_id": "K745-3MF007",
+    "section": "TipperBox Tailgate",
+    "filename": "K745_TipperBoxTailgate_PETG_v02.3mf",
+    "tracked_plate_numbers": [
+      1
+    ]
+  },
+  {
+    "project_id": "K745-3MF008",
+    "section": "TPU",
+    "filename": "K745_TPU_TPU_v02.3mf",
+    "tracked_plate_numbers": [
+      1
+    ]
+  }
+]

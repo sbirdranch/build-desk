@@ -1,0 +1,9 @@
+{
+  "name": "build-desk-assets",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local preview gallery and reproducible asset pipeline for Build Desk",
+  "type": "module",
+  "scripts": {"preview": "node tools/preview-server.mjs"},
+  "dependencies": {"three": "0.180.0"}
+}
