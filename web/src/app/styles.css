@@ -25,3 +25,4 @@
 @media(max-width:1100px) and (min-width:801px){.status-dock{height:86px;min-height:86px}}
 @media(max-width:800px){.status-dock{height:104px;min-height:104px;padding-block:5px}.status-reference{grid-template-rows:30px 24px}}
 .tree-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tree-row button:not(.disclosure){gap:6px}.tree-completion{padding-left:0}
+.part-heading-number{font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--muted);white-space:nowrap;vertical-align:middle}
