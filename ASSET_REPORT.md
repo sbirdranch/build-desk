@@ -13,7 +13,7 @@ Generated from current read-only NAS working copies, not from mockup illustratio
 | Tracked plate identities | 24 |
 | Additional untracked wheel plate candidate | 1 |
 | Plate thumbnail / still / GLB sets | 25 |
-| Original branding files | 12 |
+| Branding files, including realistic master and provenance | 14 |
 
 All 252 main images decode and contain visible variation. All 126 GLBs pass container/mesh checks. All 101 tracked part IDs and seven project IDs are covered, with no missing files or generation exceptions. Sources match catalog SHA-256 fingerprints. The 126 display sets occupy approximately 52.4 MiB, excluding extracted original plate PNGs and contact sheets.
 
@@ -24,3 +24,7 @@ Standard Wheel and Standard Hub are excluded. The extra plate in the current whe
 All seven projects contain `Metadata/slice_info.config`, but those files currently contain only a slicer header, no per-plate estimates. No saved G-code entries were found. Consequently all plates show **Not yet sliced**. Confirming persistence of actual estimates after slicing/saving in the installed Bambu Studio remains a separate integration validation; metadata-file existence alone is insufficient.
 
 No spreadsheet cells, acceptance counts, job statuses, original STL files or original 3MF projects were changed. Model working copies and generated derivatives remain local and Git-excluded. Code, original branding, source identity mappings, documentation and dependency lockfiles are committed to the private repository.
+
+Branding revision: replaced the initial flat silhouette with a realistic transparent truck illustration generated using the built-in image tool. All PNG icon sizes, favicon and wordmarks were regenerated from that master. About now displays “An application by IntegratedSA LLC.”
+
+Finished-product references: imported 3 original photos (front 2048 × 1536, passenger side 1862 × 940, rear 1789 × 889), plus lossless browsing previews and thumbnails. SHA-256 checks confirm copied originals are byte-identical. No color grading is applied, and embedded ICC profiles are retained when present. Reference files remain local and Git-excluded.

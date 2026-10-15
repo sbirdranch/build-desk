@@ -8,7 +8,7 @@ Use a single charcoal/yellow application shell with an original dump-truck logo 
 
 Tree hierarchy: Vehicle → Section → 3MF → Plate → Part. Tree clicks, detail child rows and breadcrumbs share one selected entity; selection expands/highlights the appropriate ancestors. Search/filter retains matching ancestors. Separate readiness filters (confirmed/review needed) from completion filters (not printed/partial/complete). Provide meaningful sorting with explicit labels. Preserve navigation context and use Save / Discard / Stay before leaving unsaved edits.
 
-Vehicle workspace shows overall accepted-part progress and section rollups. Section workspace lists its projects and summaries. 3MF workspace shows its plates and readiness. Plate workspace shows saved layout preview, material/profile, available slice estimates and a read-only parts table of required/accepted/remaining/status. Selecting a part opens its details and results workflow. Avoid repeating header bars or displaying every screen at once. Status labels accompany colors; controls remain keyboard accessible. Purchasing and Assembly will reuse the shell and drill-down patterns later.
+Vehicle workspace shows overall accepted-part progress, section rollups, and a finished-product reference-photo gallery for appearance and color decisions. Reference thumbnails open larger previews and byte-identical originals at full resolution; no color grading or generated replacement photos. Retain source filenames, provenance and ICC profiles. Initially use the front, passenger-side and rear photos provided on the NAS. References remain reachable while working deeper in the tree without losing selection or edits. Section workspace lists its projects and summaries. 3MF workspace shows its plates and readiness. Plate workspace shows saved layout preview, material/profile, available slice estimates and a read-only parts table of required/accepted/remaining/status. Selecting a part opens its details and results workflow. Avoid repeating header bars or displaying every screen at once. Status labels accompany colors; controls remain keyboard accessible. Purchasing and Assembly will reuse the shell and drill-down patterns later.
 
 ## Production behavior
 
@@ -24,7 +24,7 @@ Open a project in Bambu Studio for manual review, layout changes and slicing; sa
 
 Generate cached thumbnails and larger still images from real STL geometry. Extract saved plate images and reconstruct 3MF component/build transforms for display geometry. Produce simplified, display-only GLBs for on-demand rotation/zoom. Retain disabled instance metadata; do not infer required quantities or change print settings. Use stable Part IDs and Project ID + local plate number as asset keys. Fingerprint source files for regeneration. Do not publish model derivatives without deliberate authorization.
 
-About: logo/name, purpose, version/build, project, last successful data sync, help/repository links and dependency licenses. Diagnostics reveal reachability, never secrets.
+About: logo/name, the attribution **An application by IntegratedSA LLC**, purpose, version/build, project, last successful data sync, help/repository links and dependency licenses. Diagnostics reveal reachability, never secrets. Branding uses a realistic yellow articulated dump truck rather than the initial simplified silhouette.
 
 ## Delivery stages and validation
 

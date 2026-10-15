@@ -1,0 +1,5 @@
+[
+  {"id":"K745-REF001","name":"Finished truck — front","filename":"FrontPicture.jpg","vehicle":"Kitten 745","view":"Front"},
+  {"id":"K745-REF002","name":"Finished truck — passenger side","filename":"PassangerPicture.jpg","vehicle":"Kitten 745","view":"Passenger side"},
+  {"id":"K745-REF003","name":"Finished truck — rear","filename":"RearPicture.jpg","vehicle":"Kitten 745","view":"Rear"}
+]

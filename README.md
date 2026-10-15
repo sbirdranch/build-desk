@@ -4,7 +4,7 @@ Browser workspace for Kitten 745 production tracking. This first delivery contai
 
 ## What is versioned
 
-Code, original branding, tracker identity mappings, dependency locks and documentation. Original STL/3MF files, derived model assets, local production snapshots, credentials and caches are deliberately Git-excluded. This private repository is not a backup of your model library. Source model rights remain with their original owners. No open-source license is granted to the model library by this repository.
+Code, application branding, tracker identity mappings, dependency locks and documentation. Original STL/3MF files, derived model assets, local production snapshots, credentials and caches are deliberately Git-excluded. This private repository is not a backup of your model library. Source model rights remain with their original owners. No open-source license is granted to the model library by this repository.
 
 ## Generate assets
 
@@ -15,6 +15,7 @@ python -m pip install -r requirements.txt
 python tools/create_branding.py
 powershell -File tools/prepare-inputs.ps1
 python tools/generate_assets.py --stl-root local-inputs/stl-current --projects local-inputs/projects --keys config/parts.json --project-manifest config/projects.json
+python tools/import_references.py
 python tools/verify_assets.py
 npm ci --ignore-scripts
 npm run preview
@@ -26,7 +27,7 @@ If Python packages are installed under `.python-packages`, the tools detect that
 
 ## Outputs
 
-- `assets/branding/`: original SVG mark, dark/light wordmarks, PNG icon sizes, favicon and web manifest.
+- `assets/branding/`: realistic RGBA truck mark, dark/light wordmarks, PNG icon sizes, favicon and web manifest.
 - `assets/generated/parts/<PartID>/`: 192px WebP thumbnail, 960px WebP preview and simplified GLB.
 - `assets/generated/plates/<ProjectID>-P<NN>/`: saved embedded plate image when available, WebP preview/thumbnail, reconstructed display GLB.
 - `assets/generated/catalog.json`: stable IDs, source hashes, geometry bounds, source/display face counts, saved enabled states, available slice metadata, explicit exceptions and provenance.
@@ -38,3 +39,11 @@ STL geometry is treated in the source library's millimeter convention. GLBs use 
 No new required/completed quantities are inferred. Wheel object membership may be ambiguous because the project contains split objects. Unknown part associations remain null rather than guessed. Custom/manual plates discovered in files remain asset candidates; generating a preview does not add them to the production tracker.
 
 See [plan.md](plan.md) for the full interface and workflow decisions, and [ASSET_REPORT.md](ASSET_REPORT.md) for this batch's verified results.
+
+## Application attribution
+
+Build Desk is attributed to **IntegratedSA LLC** in the About dialog. The truck artwork was created with AI-assisted image generation; the committed RGBA master drives all packaged icon sizes and wordmarks. Source model ownership is unchanged.
+
+## Finished-product reference photos
+
+Choose **Reference photos** to view the front, passenger-side and rear images provided on the NAS. **Open full-resolution photo** opens a byte-identical copy of the original in a zoomable dialog with Fit, 100%, and zoom controls. Closing the dialog returns to the same selection. The importer retains embedded ICC profiles in lossless browsing previews, with no color grading or generated substitutions. Originals and previews stay Git-excluded under `assets/generated`; identities and import tools are versioned. In the production interface these belong in the Vehicle workspace and remain accessible during part/plate work.

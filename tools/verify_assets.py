@@ -46,7 +46,21 @@ def main():
             check(all(len(a.get('min',[0,0,0]))==len(a.get('max',[0,0,0])) for a in payload.get('accessors',[])),f'Invalid bounds: {path}')
             verified_models+=1;total_bytes+=len(raw)
         except Exception as e:errors.append(f'Invalid model {path}: {e}')
-    result={'parts':len(catalog['parts']),'projects':len(catalog['projects']),'plates':sum(len(p['plates']) for p in catalog['projects']),
+    reference_file=output/'references.json'
+    reference_count=0
+    if reference_file.exists():
+        references=json.loads(reference_file.read_text(encoding='utf-8'))
+        reference_count=len(references)
+        expected=json.loads((ROOT/'config/references.json').read_text(encoding='utf-8'))
+        check({r['id'] for r in references}=={r['id'] for r in expected},'Missing or extra reference photos')
+        for photo in references:
+            original=output/photo['original']
+            source=ROOT/'local-inputs/references'/photo['filename']
+            check(hashlib.sha256(source.read_bytes()).hexdigest()==photo['sha256'],'Reference source changed: '+photo['id'])
+            check(hashlib.sha256(original.read_bytes()).hexdigest()==photo['sha256'],'Reference original copy changed: '+photo['id'])
+            for field in ['thumbnail','preview']:
+                with Image.open(output/photo[field]) as im: im.load()
+    result={'parts':len(catalog['parts']),'projects':len(catalog['projects']),'plates':sum(len(p['plates']) for p in catalog['projects']),'reference_photos':reference_count,
             'verified_images':verified_images,'verified_models':verified_models,'display_asset_bytes':total_bytes,
             'exceptions':catalog['exceptions'],'errors':errors,'passed':not errors and not catalog['exceptions']}
     (output/'verification.json').write_text(json.dumps(result,indent=2),encoding='utf-8')

@@ -2,6 +2,7 @@
   "name": "build-desk-assets",
   "private": true,
   "version": "0.1.0",
+  "author": "IntegratedSA LLC",
   "description": "Local preview gallery and reproducible asset pipeline for Build Desk",
   "type": "module",
   "scripts": {"preview": "node tools/preview-server.mjs"},
