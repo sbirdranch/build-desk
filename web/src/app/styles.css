@@ -3,3 +3,5 @@
 /* The workbench keeps one header/footer while each desktop pane scrolls. */
 .app-shell{height:100dvh;min-height:0}.workspace{overflow:hidden}.sidebar,.detail{overflow-y:auto}.mobile-browse{display:none}.app-header,.current-job,.connection-bar,.notice,.printer-bar{flex-shrink:0}
 @media(max-width:800px){.app-shell{height:auto;min-height:100dvh}.workspace{overflow:visible}.sidebar,.detail{overflow:visible}.mobile-browse{display:flex;width:100%;justify-content:space-between;background:transparent}.sidebar:not(.mobile-open)>.search,.sidebar:not(.mobile-open)>.filters,.sidebar:not(.mobile-open)>.tree{display:none}.sidebar.mobile-open>.search{margin-top:12px}}
+
+.printer-status{display:block}.printer-summary{display:flex;align-items:center;gap:15px;flex-wrap:wrap}.printer-summary svg{flex:none}.printer-status.live .printer-signal{color:var(--green)}.printer-status.stale .printer-signal,.printer-status.offline .printer-signal{color:var(--yellow)}.printer-observed{margin-left:auto}.printer-job{margin:5px 0 0 33px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.printer-job .muted{margin-left:0}

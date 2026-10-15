@@ -10,7 +10,13 @@ The active workbook is **local-data/kitten-745/Master Tracker.xlsx**. Its comple
 
 Home-network clients can view last recorded status using this PC's LAN address on port 4174 when Windows networking permits it. Editing and file actions are restricted to the host's loopback address. Phone layouts are for review only. The app is intended for a trusted home network, not Internet publication or a reverse proxy.
 
-See [UAT_CHECKLIST.md](UAT_CHECKLIST.md) for the first real print walk-through and [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md) for verified behavior and remaining limits. Printer device monitoring is not connected. Purchasing and Assembly are reserved modules.
+See [UAT_CHECKLIST.md](UAT_CHECKLIST.md) for the first real print walk-through and [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md) for verified behavior and remaining limits. Read-only H2D monitoring is configured locally; Purchasing and Assembly are reserved modules.
+
+## Printer status
+
+The desktop footer shows printer-reported job, state, progress, estimated remaining time, layers and observation time. These are separate from the tracked production job and accepted quantities. A dropped connection or observations older than thirty seconds are labeled stale. Mobile remains a recorded-information-only view.
+
+Local connection settings are under `local-data/printers/<printer-id>.local.json`, with `host`, `serialNumber`, and `accessCode`. The matching printer ID is registered per Build. Keep this file private; it is Git-excluded and never returned by the app API. A local `bambu-ca.cert` validates the printer certificate chain, and the serial number validates its certificate identity. The current CA's source and checksum are recorded beside it. Restart the app after changing connection settings. The tested H2D uses firmware 01.04.00.00 in normal/cloud-connected mode; no mode change was required. No pause, stop, start, temperature or motion controls are implemented.
 
 ## Install, build and verify
 

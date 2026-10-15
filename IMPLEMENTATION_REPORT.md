@@ -34,10 +34,16 @@ In-app Cabin refresh regenerated its plate previews successfully. Front Chassis 
 
 ## Limits and next acceptance steps
 
-Printer device telemetry is not connected; no live printer state/countdown is claimed. Physical layout changes, slicing and printing remain manual in Bambu Studio. Current saved archives provide no verified time/material estimate. A deliberately sliced saved working copy still needs a save/reopen check with this installed Studio version before promising reliable estimate availability.
+Read-only printer telemetry was added after the initial delivery, as detailed below. Physical layout changes, slicing and printing remain manual in Bambu Studio. Current saved archives provide no verified time/material estimate. A deliberately sliced saved working copy still needs a save/reopen check with this installed Studio version before promising reliable estimate availability.
 
 Purchasing and Assembly are reserved modules. Build registration is configuration-based; no New Build wizard is supplied. Remote editing, automatic cloud synchronization, automatic discovery/adoption of custom plates and automatic acceptance are not enabled. Spreadsheet Apps Script controls do not run in Excel.
 
 Excel should be closed during app saves. An interrupted process can leave a lock file; verify the service is stopped before removing a stale lock. The change log is an audit aid, not a tamper-proof ledger. External Excel edits are detected as changed files but are not attributed as app actions. Workbooks, backups, photos and model derivatives are outside Git and should be included in normal file backups.
 
 Follow UAT_CHECKLIST.md for the first real plate → Start → inspection → accepted-parts cycle. Preserve the original export during acceptance.
+
+## Printer monitoring follow-up — October 15, 2026
+
+The H2D authenticated locally in normal/cloud-connected mode on firmware 01.04.00.00. Its certificate chain and serial identity verified with TLS validation enabled. A subscribe-only test received five reports, including RUNNING, the Grill pieces black device job, 44% progress, 152 minutes remaining, layer 45 of 348 and reported temperatures. Those values are a historical test observation, not current status. No printer controls, network-mode changes, or production-workbook updates were issued.
+
+The application now maintains a read-only status subscriber and shows the selected printer's observed job/state/progress/time/layers in the desktop footer, with ten-second display refreshes and stale labels after thirty seconds. Device telemetry remains separate from Excel acceptance. Mobile does not poll the live printer feed. Connection secrets and certificate/provenance files remain local and Git-excluded. Three additional tests cover fragmented/coalesced MQTT frames, invalid/oversized frames, freshness/disconnection labels and omission of credentials from API views; all 15 integration tests pass.
