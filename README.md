@@ -86,3 +86,8 @@ Build Desk is attributed to **IntegratedSA LLC** in the About dialog. The truck 
 ## Finished-product reference photos
 
 Choose **References** to view the front, passenger-side and rear images provided on the NAS. Full-resolution photos retain original bytes and open in a zoomable dialog with Fit, 100%, and zoom controls. Closing the dialog returns to the same selection. The importer retains embedded ICC profiles in lossless browsing previews, with no color grading or generated substitutions. Originals and previews stay Git-excluded under `assets/generated`; identities and import tools are versioned. Photos are also available in the Vehicle workspace.
+
+## Saved plate naming and refresh
+All saved plates are imported by **Refresh file details**, including newly added plates. To exclude a custom layout, end its saved Bambu Studio plate name with `ignore` (case-insensitive; trailing spaces are allowed). Example: `P09_Custom_reprints_ignore`. Renaming an existing tracked plate this way removes its current mapping on refresh while preserving historical jobs and accepted quantities. Renaming it without the suffix brings it back into tracking on refresh. **Reload tracker** only reloads the workbook; save the 3MF and use **Refresh file details** to read changed layouts.
+
+For a split STL, use **Review print quantity** → review the layout in Bambu Studio → enter complete units in **Enabled copies** and the total in **Planned quantity** → confirm layout → **Save preparation**. Vehicle required quantity does not confirm a plate's output. Inspection after printing still records actual accepted/rejected quantities.

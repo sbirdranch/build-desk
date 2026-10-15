@@ -24,7 +24,9 @@ export function applyCommand(original:Snapshot,command:Command,config:BuildConfi
   requireThat(Array.isArray(command.plates)&&new Set(command.plates.map(p=>p.number)).size===command.plates.length,'Invalid imported plates.');
   const oldPlates=s.plates.filter(p=>p.fileId===file.id),updated=[];
   for(const imported of command.plates){
-   const old=oldPlates.find(p=>p.number===imported.number);requireThat(old,'New custom plates require explicit registration.');
+   requireThat(integer(imported.number,1),'Invalid imported plate number.');
+   const existing=oldPlates.find(p=>p.number===imported.number);requireThat(existing||command.registerPlates?.includes(imported.number),'New custom plates require explicit registration.');
+   const old=existing||{id:file.id+'-P'+String(imported.number).padStart(2,'0'),fileId:file.id,number:imported.number,name:imported.name,section:file.section,assignments:[]};
    requireThat(new Set(imported.assignments.map(a=>a.partId)).size===imported.assignments.length,'Duplicate imported part rows.');
    const assignments=imported.assignments.map(a=>{requireThat(s.parts.some(p=>p.id===a.partId),'Unknown imported part.');requireThat(a.copies===null||integer(a.copies),'Invalid imported copy count.');return {id:old.assignments.find(x=>x.partId===a.partId)?.id||file.id+'-M-'+randomUUID().slice(0,12),partId:a.partId,copies:a.copies,confirmed:!a.split,note:a.split?'Split STL component(s); confirm complete-unit quantities before printing.':(old.assignments.find(x=>x.partId===a.partId)?.note||'')};});
    const plate={...old,name:String(imported.name).slice(0,200),assignments,unmappedObjects:imported.unmapped.map(n=>String(n).slice(0,250))};

@@ -19,13 +19,12 @@ export async function inspectMembership(bytes:Buffer,snapshot:Snapshot,fileId:st
  const settings=await xml('Metadata/model_settings.config'),model=await xml('3D/3dmodel.model');
  const objects=new Map(many<Node>(settings.config?.object).map(o=>[String(o['@_id']),o]));
  const items=many<Node>(model.model?.build?.item);
- const tracked=new Set(snapshot.plates.filter(p=>p.fileId===fileId).map(p=>p.number));
  const match=(name:string)=>snapshot.parts.filter(p=>path.win32.basename(p.source).toLowerCase()===path.win32.basename(name).toLowerCase());
  const plates:ImportedPlate[]=[],untracked:number[]=[];
  for(const node of many<Node>(settings.config?.plate)) {
   const md=metadata(node),number=Number(md.plater_id);
   if(!Number.isSafeInteger(number)||number<1)throw new DomainError('A saved plate has an invalid number.');
-  if(!tracked.has(number)){untracked.push(number);continue;}
+  if(/ignore\s*$/i.test(md.plater_name||'')){untracked.push(number);continue;}
   const assignments=new Map<string,ImportedPlate['assignments'][number]>(),unmapped:string[]=[];
   for(const instance of many<Node>(node.model_instance)) {
    const im=metadata(instance),object=objects.get(im.object_id);
@@ -57,8 +56,8 @@ export async function refreshTrackedFile(config:BuildConfig,snapshot:Snapshot,fi
  const inspected=await inspectMembership(await readFile(modelPath(config,file.filename)),snapshot,fileId);
  await refreshFile(config,snapshot,fileId);
  const hashes=await sourceHashes(config,snapshot);
- const command:Command={type:'reconcile-file',fileId,sourceHash:inspected.sourceHash,plates:inspected.plates};
+ const command:Command={type:'reconcile-file',fileId,sourceHash:inspected.sourceHash,plates:inspected.plates,registerPlates:inspected.plates.filter(p=>!snapshot.plates.some(old=>old.fileId===fileId&&old.number===p.number)).map(p=>p.number)};
  const result=await createStore(config).commit(revision,requestId,command,hashes);
  const review=inspected.plates.reduce((n,p)=>n+p.unmapped.length,0);
- return {message:`File details refreshed: plate parts and images updated.${inspected.untracked.length?' '+inspected.untracked.length+' custom/new plate(s) remain untracked.':''}${review?' '+review+' object(s) need part matching.':''}`,replayed:result.replayed};
+ return {message:`File details refreshed: plate parts and images updated.${inspected.untracked.length?' '+inspected.untracked.length+' plate(s) ending in ignore remain untracked.':''}${review?' '+review+' object(s) need part matching.':''}`,replayed:result.replayed};
 }

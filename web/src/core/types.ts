@@ -11,7 +11,7 @@ export type Snapshot={build:{id:string;name:string};revision:string;recordedAt:s
 export type ResultInput={mappingId:string;accepted:number|null;rejected:number|null};
 export type ImportedPlate={number:number;name:string;assignments:{partId:string;copies:number|null;split?:boolean}[];unmapped:string[]};
 export type Command=
- | {type:'reconcile-file';fileId:string;sourceHash:string;plates:ImportedPlate[]}
+ | {type:'reconcile-file';fileId:string;sourceHash:string;plates:ImportedPlate[];registerPlates?:number[]}
  | {type:'update-parts';items:{partId:string;required:number|null;installed:number}[]}
  | {type:'save-preparation';plateId:string;preparation:Preparation}
  | {type:'start';plateId:string}

@@ -10,7 +10,7 @@ import {applyCommand} from '../src/core/domain';
 import {requireEditor} from '../src/server/security';
 import {withPrinterSlot} from '../src/server/printer-slot';
 import {assetFile,refreshFile} from '../src/server/assets';
-import {inspectMembership} from '../src/server/reconcile';
+import {inspectMembership,refreshTrackedFile} from '../src/server/reconcile';
 import type {BuildConfig,Preparation} from '../src/core/types';
 const testRoot=path.resolve('test-output');
 async function fixture(id='test-build'){
@@ -94,12 +94,12 @@ test('reconciliation moves part membership, retires mappings and preserves immut
  await assert.rejects(()=>f.store.commit(s.revision,randomUUID(),{type:'reconcile-file',fileId:'file-one',sourceHash:'older-source',plates:[]},{'file-one':'new-source'}),/changed during/);
 });
 
-test('3MF membership groups split components without inventing complete copies and leaves new plates untracked',async()=>{
+test('3MF membership groups split components and imports new plates except ignore suffix',async()=>{
  const f=await fixture();const zip=new JSZip();
- zip.file('Metadata/model_settings.config','<config><object id="1"><metadata key="name" value="Panel.stl_1"/></object><object id="2"><metadata key="name" value="Panel.stl_2"/></object><object id="3"><metadata key="name" value="Bracket.stl"/></object><object id="4"><metadata key="name" value="Unknown.stl"/></object><plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="Gray"/><model_instance><metadata key="object_id" value="1"/></model_instance><model_instance><metadata key="object_id" value="2"/></model_instance><model_instance><metadata key="object_id" value="3"/></model_instance><model_instance><metadata key="object_id" value="4"/></model_instance></plate><plate><metadata key="plater_id" value="2"/></plate></config>');
+ zip.file('Metadata/model_settings.config','<config><object id="1"><metadata key="name" value="Panel.stl_1"/></object><object id="2"><metadata key="name" value="Panel.stl_2"/></object><object id="3"><metadata key="name" value="Bracket.stl"/></object><object id="4"><metadata key="name" value="Unknown.stl"/></object><plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="Gray"/><model_instance><metadata key="object_id" value="1"/></model_instance><model_instance><metadata key="object_id" value="2"/></model_instance><model_instance><metadata key="object_id" value="3"/></model_instance><model_instance><metadata key="object_id" value="4"/></model_instance></plate><plate><metadata key="plater_id" value="2"/></plate><plate><metadata key="plater_id" value="3"/><metadata key="plater_name" value="Custom IGNORE  "/></plate><plate><metadata key="plater_id" value="4"/><metadata key="plater_name" value="ignore in middle only"/></plate></config>');
  zip.file('3D/3dmodel.model','<model><build><item objectid="1" printable="1"/><item objectid="2" printable="1"/><item objectid="3" printable="0"/><item objectid="4" printable="1"/></build></model>');
  const imported=await inspectMembership(await zip.generateAsync({type:'nodebuffer'}),await f.store.load(),'file-one');
- assert.equal(imported.plates.length,1);assert.deepEqual(imported.untracked,[2]);assert.equal(imported.plates[0].assignments.length,2);assert.deepEqual(imported.plates[0].assignments[0],{partId:'part-one',copies:null,split:true});assert.equal(imported.plates[0].assignments[1].copies,0);assert.deepEqual(imported.plates[0].unmapped,['Unknown.stl']);
+ assert.equal(imported.plates.length,3);assert.deepEqual(imported.untracked,[3]);assert.equal(imported.plates[0].assignments.length,2);assert.deepEqual(imported.plates[0].assignments[0],{partId:'part-one',copies:null,split:true});assert.equal(imported.plates[0].assignments[1].copies,0);assert.deepEqual(imported.plates[0].unmapped,['Unknown.stl']);
 });
 
 test('unchanged membership preserves preparation; unmatched objects remain visible for review',async()=>{
@@ -113,4 +113,17 @@ test('unchanged membership preserves preparation; unmatched objects remain visib
  assert.ok(s.plates.find(p=>p.fileId==='file-one')!.preparation?.layoutConfirmed);
  s=(await f.store.commit(s.revision,randomUUID(),{...command,sourceHash:'changed',plates:[{number:1,name:'Unknown-only plate',assignments:[],unmapped:['New object.stl']}]},{'file-one':'changed'})).snapshot;
  const unknown=s.plates.find(p=>p.fileId==='file-one')!;assert.ok(unknown);assert.equal(unknown.assignments.length,0);assert.deepEqual(unknown.unmappedObjects,['New object.stl']);assert.equal(unknown.preparation,undefined);
+});
+
+
+test('refresh registers new production plates, excludes renamed ignore plates, and preserves accepted history',async()=>{
+ const f=await fixture();let before=await f.store.load();
+ before=(await f.store.commit(before.revision,randomUUID(),{type:'manual-results',items:[{mappingId:'map-one',planned:1,accepted:1,rejected:0}],notes:'Preserve this history'},{'file-one':'old'})).snapshot;
+ const zip=new JSZip();zip.file('Metadata/model_settings.config','<config><object id="1"><metadata key="name" value="Panel.stl"/></object><plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="Old layout ignore"/></plate><plate><metadata key="plater_id" value="8"/><metadata key="plater_name" value="Black parts"/><model_instance><metadata key="object_id" value="1"/></model_instance></plate><plate><metadata key="plater_id" value="9"/><metadata key="plater_name" value="Manual Ignore"/></plate></config>');zip.file('3D/3dmodel.model','<model><build><item objectid="1"/></build></model>');
+ await writeFile(path.join(f.dir,'Front.3mf'),await zip.generateAsync({type:'nodebuffer'}));
+ await writeFile(path.join(f.dir,'catalog.json'),JSON.stringify({parts:[],projects:[{id:'file-one',filename:'Front.3mf',sha256:'old',plates:[]}],references:[]}));
+ await refreshTrackedFile(f.config,before,'file-one',before.revision,randomUUID());const after=await f.store.load();
+ assert.deepEqual(after.plates.filter(p=>p.fileId==='file-one').map(p=>p.number),[8]);assert.equal(after.plates.find(p=>p.number===8)?.assignments[0].partId,'part-one');assert.equal(after.parts[0].accepted,1);assert.deepEqual(after.jobs,before.jobs);
+ const wb=new ExcelJS.Workbook();await wb.xlsx.readFile(f.filename);assert.equal(wb.getWorksheet('Purchasing')!.getCell('A1').value,'Do not modify');assert.equal(wb.getWorksheet('Part-to-Plate Mapping')!.getCell('G2').value,'Obsolete');
+ await refreshTrackedFile(f.config,after,'file-one',after.revision,randomUUID());const again=await f.store.load();assert.deepEqual(again.plates,after.plates);assert.deepEqual(again.jobs,after.jobs);
 });
