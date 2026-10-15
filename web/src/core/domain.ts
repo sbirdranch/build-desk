@@ -18,7 +18,29 @@ function validateResults(job:Job,results:ResultInput[],complete:boolean){
 export function applyCommand(original:Snapshot,command:Command,config:BuildConfig,sourceHashes:Record<string,string|null>,now=new Date().toISOString()):{state:Snapshot;target:string;summary:string}{
  const s=structuredClone(original);let target='',summary='';
  requireThat(command&&typeof command.type==='string','Choose a valid action.');
- if(command.type==='save-preparation'){
+ if(command.type==='reconcile-file'){
+  const file=s.files.find(f=>f.id===command.fileId);requireThat(file,'File not found.');
+  requireThat(sourceHashes[file.id]&&sourceHashes[file.id]===command.sourceHash,'The 3MF changed during refresh. Save it and refresh again.');
+  requireThat(Array.isArray(command.plates)&&new Set(command.plates.map(p=>p.number)).size===command.plates.length,'Invalid imported plates.');
+  const oldPlates=s.plates.filter(p=>p.fileId===file.id),updated=[];
+  for(const imported of command.plates){
+   const old=oldPlates.find(p=>p.number===imported.number);requireThat(old,'New custom plates require explicit registration.');
+   requireThat(new Set(imported.assignments.map(a=>a.partId)).size===imported.assignments.length,'Duplicate imported part rows.');
+   const assignments=imported.assignments.map(a=>{requireThat(s.parts.some(p=>p.id===a.partId),'Unknown imported part.');requireThat(a.copies===null||integer(a.copies),'Invalid imported copy count.');return {id:old.assignments.find(x=>x.partId===a.partId)?.id||file.id+'-M-'+randomUUID().slice(0,12),partId:a.partId,copies:a.copies,confirmed:!a.split,note:a.split?'Split STL component(s); confirm complete-unit quantities before printing.':(old.assignments.find(x=>x.partId===a.partId)?.note||'')};});
+   const plate={...old,name:String(imported.name).slice(0,200),assignments,unmappedObjects:imported.unmapped.map(n=>String(n).slice(0,250))};
+   // Retain a preparation only if neither the source nor membership changed.
+   const ordered=(rows:typeof old.assignments)=>JSON.stringify([...rows].sort((a,b)=>a.id.localeCompare(b.id)).map(a=>({id:a.id,partId:a.partId,copies:a.copies,confirmed:a.confirmed,note:a.note||''})));
+   if(file.sourceHash!==command.sourceHash||ordered(old.assignments)!==ordered(assignments)||old.name!==plate.name)delete plate.preparation;
+   updated.push(plate);
+  }
+  s.plates=s.plates.filter(p=>p.fileId!==file.id).concat(updated).sort((a,b)=>a.fileId.localeCompare(b.fileId)||a.number-b.number);
+  file.sourceHash=command.sourceHash;file.importedAt=now;target=file.id;summary='Reconciled saved plate memberships and invalidated changed preparations';
+ }else if(command.type==='update-parts'){
+  requireThat(Array.isArray(command.items)&&command.items.length>0&&command.items.length<=200,'Choose parts to update.');
+  requireThat(new Set(command.items.map(i=>i.partId)).size===command.items.length,'Duplicate part updates.');
+  for(const item of command.items){const p=s.parts.find(p=>p.id===item.partId);requireThat(p,'Part not found.');requireThat(item.required===null||integer(item.required),'Required quantity must be blank or a nonnegative whole number.');requireThat(integer(item.installed)&&item.installed<=p.accepted,'Installed count cannot exceed accepted count.');p.required=item.required;p.installed=item.installed;}
+  target=command.items.map(i=>i.partId).join(',');summary='Saved quantities for '+command.items.length+' part(s)';
+ }else if(command.type==='save-preparation'){
   const plate=s.plates.find(p=>p.id===command.plateId);requireThat(plate,'Plate not found.');const prep=command.preparation;
   requireThat(integer(prep.runs,1)&&prep.runs<=100,'Plate runs must be between 1 and 100.');
   requireThat(config.workflow.materials.includes(prep.material),'Choose a configured material.');const file=s.files.find(f=>f.id===plate.fileId)!;requireThat(file.material.includes('TPU')===prep.material.includes('TPU'),'Choose a material compatible with this project: '+file.material+'.');requireThat(typeof prep.profile==='string'&&prep.profile.trim(),'Enter a print profile.');
@@ -29,7 +51,7 @@ export function applyCommand(original:Snapshot,command:Command,config:BuildConfi
   for(const a of plate.assignments){const item=prep.items.find(i=>i.mappingId===a.id);requireThat(item,'A mapped part is missing.');requireThat(typeof item.included==='boolean','Invalid include flag.');requireThat(item.copies===null||integer(item.copies),'Copies must be whole numbers.');requireThat(item.planned===null||integer(item.planned),'Planned quantity must be a whole number.');if(item.included&&prep.layoutConfirmed)requireThat(integer(item.copies,1)&&integer(item.planned,1),'Confirm enabled copies and planned quantities for included parts.');}
   plate.preparation={...prep,notes:String(prep.notes||'').slice(0,4000),profile:prep.profile.slice(0,200),savedAt:now};target=plate.id;summary='Saved plate preparation';
  }else if(command.type==='start'){
-  const plate=s.plates.find(p=>p.id===command.plateId);requireThat(plate,'Plate not found.');const prep=plate.preparation;requireThat(prep?.layoutConfirmed,'Save a confirmed layout before starting.');
+  const plate=s.plates.find(p=>p.id===command.plateId);requireThat(plate,'Plate not found.');const prep=plate.preparation;requireThat(prep?.layoutConfirmed,'Save a confirmed layout before starting.');requireThat(!plate.unmappedObjects?.length,'Match the unknown plate objects before starting.');
   requireThat(sourceHashes[plate.fileId]&&prep.sourceHash===sourceHashes[plate.fileId],'The saved preparation is stale. Review the changed source file.');
   requireThat(integer(prep.runs,1)&&config.workflow.materials.includes(prep.material),'Review the saved runs and material.');const sourceFile=s.files.find(f=>f.id===plate.fileId)!;requireThat(sourceFile.material.includes('TPU')===prep.material.includes('TPU'),'The saved material is incompatible with this file.');
   requireThat(s.jobs.filter(j=>j.status==='Printing').length<config.workflow.maxPrintingJobs,'The printer already has an active tracked print.');

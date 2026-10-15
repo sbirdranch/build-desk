@@ -16,6 +16,8 @@ See [UAT_CHECKLIST.md](UAT_CHECKLIST.md) for the first real print walk-through a
 
 The desktop footer shows printer-reported job, state, progress, estimated remaining time, layers and observation time. These are separate from the tracked production job and accepted quantities. A dropped connection or observations older than thirty seconds are labeled stale. Mobile remains a recorded-information-only view.
 
+The other side of the footer holds action feedback, the workbook's saved time and **Reload tracker**. Success messages disappear after fifteen seconds without shifting the workspace. Reload tracker reads the current Excel record; **Refresh file details**, on a 3MF or plate, imports the saved 3MF's current membership and previews. Existing tracked plates update together; custom/new plates remain untracked. You can edit required/installed quantities directly in a plate's parts table and commit them with **Save quantities**, or edit the same values under Tracked print locations in the part detail screen. Accepted totals remain driven by print-result history.
+
 Local connection settings are under `local-data/printers/<printer-id>.local.json`, with `host`, `serialNumber`, and `accessCode`. The matching printer ID is registered per Build. Keep this file private; it is Git-excluded and never returned by the app API. A local `bambu-ca.cert` validates the printer certificate chain, and the serial number validates its certificate identity. The current CA's source and checksum are recorded beside it. Restart the app after changing connection settings. The tested H2D uses firmware 01.04.00.00 in normal/cloud-connected mode; no mode change was required. No pause, stop, start, temperature or motion controls are implemented.
 
 ## Install, build and verify

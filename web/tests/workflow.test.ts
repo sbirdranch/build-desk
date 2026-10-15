@@ -10,6 +10,7 @@ import {applyCommand} from '../src/core/domain';
 import {requireEditor} from '../src/server/security';
 import {withPrinterSlot} from '../src/server/printer-slot';
 import {assetFile,refreshFile} from '../src/server/assets';
+import {inspectMembership} from '../src/server/reconcile';
 import type {BuildConfig,Preparation} from '../src/core/types';
 const testRoot=path.resolve('test-output');
 async function fixture(id='test-build'){
@@ -72,5 +73,44 @@ test('file refresh preserves disabled flags and leaves new plates untracked',asy
  const f=await fixture();const zip=new JSZip();zip.file('Metadata/model_settings.config','<config><object id="1"><metadata key="name" value="Panel.stl"/></object><plate><metadata key="plater_id" value="1"/><model_instance><metadata key="object_id" value="1"/><metadata key="instance_id" value="0"/></model_instance></plate><plate><metadata key="plater_id" value="2"/><model_instance><metadata key="object_id" value="1"/><metadata key="instance_id" value="0"/></model_instance></plate></config>');zip.file('3D/3dmodel.model','<model><build><item objectid="1" printable="0"/></build></model>');zip.file('Metadata/slice_info.config','<config><header/></config>');await writeFile(path.join(f.dir,'Front.3mf'),await zip.generateAsync({type:'nodebuffer'}));await writeFile(path.join(f.dir,'catalog.json'),JSON.stringify({parts:[],projects:[{id:'file-one',filename:'Front.3mf',sha256:'old',plates:[{id:'file-one-P01',name:'Plate1',thumbnail:'old.png',preview:'old.png',model:'old.glb',tracking:'tracked'}]}],references:[]}));const before=await f.store.load();const result=await refreshFile(f.config,before,'file-one');assert.equal(result.changed,true);const cat=JSON.parse(await readFile(path.join(f.dir,'catalog.json'),'utf8'));assert.equal(cat.projects[0].plates[0].instances[0].enabled,false);assert.equal(cat.projects[0].plates[0].model,undefined);assert.equal(cat.projects[0].plates[1].tracking,'untracked_candidate');assert.equal(cat.projects[0].plates[0].slice_info.label,'Not yet sliced');assert.equal((await f.store.load()).revision,before.revision);
 });
 test('real exported workbook survives a clone-only save; original is unchanged',async()=>{
- const input=path.resolve('../local-data/kitten-745/Master Tracker.xlsx');const original=await readFile(input);const dir=path.join(testRoot,'real-roundtrip-'+randomUUID());await mkdir(dir,{recursive:true});const filename=path.join(dir,'Clone.xlsx');await writeFile(filename,original);const registry=JSON.parse(await readFile('../config/builds.json','utf8'));const config={...registry.builds[0],store:{...registry.builds[0].store,path:filename}} as BuildConfig;const store=new ExcelStore(config);const before=await store.load();const part=before.parts[0];await store.commit(before.revision,randomUUID(),{type:'update-part',partId:part.id,required:part.required,installed:part.installed,notes:part.notes+' [TEST CLONE ONLY]'},{});const after=await store.load();assert.equal(after.parts.length,101);assert.deepEqual(after.parts.map(p=>p.accepted),before.parts.map(p=>p.accepted));const wb=new ExcelJS.Workbook();await wb.xlsx.readFile(filename);assert.equal(wb.worksheets.length,19);assert.equal(createHash('sha256').update(await readFile(input)).digest('hex'),createHash('sha256').update(original).digest('hex'));
+ const input=path.resolve('../local-data/kitten-745/Master Tracker.xlsx');const original=await readFile(input);const dir=path.join(testRoot,'real-roundtrip-'+randomUUID());await mkdir(dir,{recursive:true});const filename=path.join(dir,'Clone.xlsx');await writeFile(filename,original);const registry=JSON.parse(await readFile('../config/builds.json','utf8'));const config={...registry.builds[0],store:{...registry.builds[0].store,path:filename}} as BuildConfig;const store=new ExcelStore(config);const before=await store.load();const part=before.parts[0];await store.commit(before.revision,randomUUID(),{type:'update-part',partId:part.id,required:part.required,installed:part.installed,notes:part.notes+' [TEST CLONE ONLY]'},{});const after=await store.load();assert.equal(after.parts.length,101);assert.deepEqual(after.parts.map(p=>p.accepted),before.parts.map(p=>p.accepted));const wb=new ExcelJS.Workbook();await wb.xlsx.readFile(filename);const sourceBook=new ExcelJS.Workbook();await sourceBook.xlsx.load(original as never);for(const sheet of sourceBook.worksheets)assert.ok(wb.getWorksheet(sheet.name),'Preserve '+sheet.name);const missing=['Build Desk Preparations','Build Desk Result Drafts','Build Desk Change Log'].filter(n=>!sourceBook.getWorksheet(n)).length;assert.equal(wb.worksheets.length,sourceBook.worksheets.length+missing);assert.equal(createHash('sha256').update(await readFile(input)).digest('hex'),createHash('sha256').update(original).digest('hex'));
+});
+
+test('plate quantity edits commit atomically and preserve accepted history and notes',async()=>{
+ const f=await fixture();let s=await f.store.load();
+ await assert.rejects(()=>f.store.commit(s.revision,randomUUID(),{type:'update-parts',items:[{partId:'part-one',required:1,installed:0},{partId:'part-two',required:1,installed:1}]},{}),/Installed/);
+ assert.deepEqual((await f.store.load()).parts.map(p=>p.required),[3,2]);
+ s=(await f.store.commit(s.revision,randomUUID(),{type:'update-parts',items:[{partId:'part-one',required:1,installed:0},{partId:'part-two',required:1,installed:0}]},{})).snapshot;
+ assert.deepEqual(s.parts.map(p=>p.required),[1,1]);assert.equal(s.parts[0].notes,'Keep notes');assert.deepEqual(s.parts.map(p=>p.accepted),[0,0]);assert.equal(s.jobs.length,0);
+});
+
+test('reconciliation moves part membership, retires mappings and preserves immutable jobs',async()=>{
+ const f=await fixture();let s=await start(f);s=(await f.store.commit(s.revision,randomUUID(),{type:'finish',jobId:s.jobs[0].id,results:[{mappingId:'map-one',accepted:1,rejected:1}]},{})).snapshot;
+ const oldHistory=JSON.stringify(s.jobs),oldQuantities=s.parts.map(p=>({accepted:p.accepted,required:p.required,installed:p.installed}));
+ const refreshed=await f.store.commit(s.revision,randomUUID(),{type:'reconcile-file',fileId:'file-one',sourceHash:'new-source',plates:[{number:1,name:'Black parts',assignments:[{partId:'part-two',copies:2}],unmapped:[]}]},{'file-one':'new-source'});
+ s=refreshed.snapshot;const plate=s.plates.find(p=>p.fileId==='file-one')!;
+ assert.equal(plate.assignments.length,1);assert.equal(plate.assignments[0].partId,'part-two');assert.equal(plate.name,'Black parts');assert.equal(plate.preparation,undefined);assert.equal(s.files[0].sourceHash,'new-source');assert.equal(JSON.stringify(s.jobs),oldHistory);assert.deepEqual(s.parts.map(p=>({accepted:p.accepted,required:p.required,installed:p.installed})),oldQuantities);
+ const wb=new ExcelJS.Workbook();await wb.xlsx.readFile(f.filename);assert.equal(wb.getWorksheet('Part-to-Plate Mapping')!.getCell('G2').value,'Obsolete');assert.ok(wb.getWorksheet('Build Desk File Imports'));assert.equal(wb.getWorksheet('Printed Parts Checklist')!.getCell('L2').value,'Unmapped');assert.ok(String(wb.getWorksheet('Printed Parts Checklist')!.getCell('L3').value).includes('Black parts'));
+ await assert.rejects(()=>f.store.commit(s.revision,randomUUID(),{type:'reconcile-file',fileId:'file-one',sourceHash:'older-source',plates:[]},{'file-one':'new-source'}),/changed during/);
+});
+
+test('3MF membership groups split components without inventing complete copies and leaves new plates untracked',async()=>{
+ const f=await fixture();const zip=new JSZip();
+ zip.file('Metadata/model_settings.config','<config><object id="1"><metadata key="name" value="Panel.stl_1"/></object><object id="2"><metadata key="name" value="Panel.stl_2"/></object><object id="3"><metadata key="name" value="Bracket.stl"/></object><object id="4"><metadata key="name" value="Unknown.stl"/></object><plate><metadata key="plater_id" value="1"/><metadata key="plater_name" value="Gray"/><model_instance><metadata key="object_id" value="1"/></model_instance><model_instance><metadata key="object_id" value="2"/></model_instance><model_instance><metadata key="object_id" value="3"/></model_instance><model_instance><metadata key="object_id" value="4"/></model_instance></plate><plate><metadata key="plater_id" value="2"/></plate></config>');
+ zip.file('3D/3dmodel.model','<model><build><item objectid="1" printable="1"/><item objectid="2" printable="1"/><item objectid="3" printable="0"/><item objectid="4" printable="1"/></build></model>');
+ const imported=await inspectMembership(await zip.generateAsync({type:'nodebuffer'}),await f.store.load(),'file-one');
+ assert.equal(imported.plates.length,1);assert.deepEqual(imported.untracked,[2]);assert.equal(imported.plates[0].assignments.length,2);assert.deepEqual(imported.plates[0].assignments[0],{partId:'part-one',copies:null,split:true});assert.equal(imported.plates[0].assignments[1].copies,0);assert.deepEqual(imported.plates[0].unmapped,['Unknown.stl']);
+});
+
+test('unchanged membership preserves preparation; unmatched objects remain visible for review',async()=>{
+ const f=await fixture();let s=await f.store.load();
+ const command={type:'reconcile-file' as const,fileId:'file-one',sourceHash:'source-a',plates:[{number:1,name:'Front plate',assignments:[{partId:'part-two',copies:1},{partId:'part-one',copies:2}],unmapped:[] as string[]}]};
+ s=(await f.store.commit(s.revision,randomUUID(),command,{'file-one':'source-a'})).snapshot;
+ const p=s.plates.find(p=>p.fileId==='file-one')!;
+ const prep={...preparation(),items:p.assignments.map(a=>({mappingId:a.id,included:true,copies:a.copies,planned:a.copies}))};
+ s=(await f.store.commit(s.revision,randomUUID(),{type:'save-preparation',plateId:p.id,preparation:prep},{'file-one':'source-a'})).snapshot;
+ s=(await f.store.commit(s.revision,randomUUID(),command,{'file-one':'source-a'})).snapshot;
+ assert.ok(s.plates.find(p=>p.fileId==='file-one')!.preparation?.layoutConfirmed);
+ s=(await f.store.commit(s.revision,randomUUID(),{...command,sourceHash:'changed',plates:[{number:1,name:'Unknown-only plate',assignments:[],unmapped:['New object.stl']}]},{'file-one':'changed'})).snapshot;
+ const unknown=s.plates.find(p=>p.fileId==='file-one')!;assert.ok(unknown);assert.equal(unknown.assignments.length,0);assert.deepEqual(unknown.unmappedObjects,['New object.stl']);assert.equal(unknown.preparation,undefined);
 });

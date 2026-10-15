@@ -1,15 +1,18 @@
 export type BuildConfig={id:string;name:string;active:boolean;store:{kind:'excel';path:string;schema:string};assets:{root:string;catalog:string;references?:string;renderer?:string};models:{directory:string;bambuExecutable?:string};printer?:{id?:string;name:string};workflow:{defaultProfile:string;materials:string[];maxPrintingJobs:number};modules:string[]};
 export type Part={id:string;name:string;section:string;source:string;material:string;required:number|null;opening:number;accepted:number;installed:number;notes:string};
-export type Assignment={id:string;partId:string;copies:number|null;confirmed:boolean};
+export type Assignment={id:string;partId:string;copies:number|null;confirmed:boolean;note?:string};
 export type Preparation={runs:number;material:string;profile:string;layoutConfirmed:boolean;sourceHash:string;items:{mappingId:string;included:boolean;copies:number|null;planned:number|null}[];notes:string;savedAt:string};
-export type Plate={id:string;fileId:string;number:number;name:string;section:string;assignments:Assignment[];preparation?:Preparation};
-export type ModelFile={id:string;filename:string;revision:string;profile:string;material:string;section:string};
+export type Plate={id:string;fileId:string;number:number;name:string;section:string;assignments:Assignment[];unmappedObjects?:string[];preparation?:Preparation};
+export type ModelFile={id:string;filename:string;revision:string;profile:string;material:string;section:string;sourceHash?:string;importedAt?:string};
 export type JobItem={partId:string;mappingId:string;fileId:string;fileRevision:string;filename:string;plateNumber:number;plateName:string;runs:number;planned:number;accepted:number|null;rejected:number|null;profile:string;material:string;notes:string};
 export type Job={id:string;kind:'plate'|'manual';status:'Printing'|'Awaiting inspection'|'Completed'|'Cancelled';startedAt:string;finishedAt:string;items:JobItem[];draft?:{mappingId:string;accepted:number|null;rejected:number|null}[]};
 export type Audit={requestId:string;at:string;action:string;target:string;summary:string;before:string;after:string};
 export type Snapshot={build:{id:string;name:string};revision:string;recordedAt:string;parts:Part[];files:ModelFile[];plates:Plate[];jobs:Job[];audit:Audit[]};
 export type ResultInput={mappingId:string;accepted:number|null;rejected:number|null};
+export type ImportedPlate={number:number;name:string;assignments:{partId:string;copies:number|null;split?:boolean}[];unmapped:string[]};
 export type Command=
+ | {type:'reconcile-file';fileId:string;sourceHash:string;plates:ImportedPlate[]}
+ | {type:'update-parts';items:{partId:string;required:number|null;installed:number}[]}
  | {type:'save-preparation';plateId:string;preparation:Preparation}
  | {type:'start';plateId:string}
  | {type:'await-inspection';jobId:string}
