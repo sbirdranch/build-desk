@@ -74,3 +74,8 @@ Refresh now imports new saved plates automatically, excluding names ending in ig
 Tree entries at Build, Section, 3MF, Plate and Part levels now show acceptance-based completion symbols: green check (all required quantities accepted), yellow dashed circle (partial), empty circle (not complete), and question mark (quantity or part matching review). Rollups use all descendants, independently of the current filter and recorded plate runs. Empty/unmatched branches cannot become complete. Completion filtering now filters part leaves as well as their ancestor paths.
 
 The controls are labeled Reload Tracking Data (workbook) and Reload Print Details (saved 3MF). The desktop status dock is reduced from 98 to 70 pixels and the redundant Vehicle eyebrow is removed.
+
+## Active tracked print and plate review (2026-10-15)
+The green printer symbol follows the active tracked job to its nearest visible ancestor as branches collapse or filters hide its descendants. It stops at plate level; the active plate label and header label use matching green bold text. The symbol tooltip names the tracked file/plate. Completion and active-job symbols share a right-aligned decorator group. This indicates workbook job state, independently of printer telemetry.
+
+Plate detail uses a Review Plate button in the heading and below the parts table, both opening the preparation review. Saved/changed review state remains visible in the heading control. Read-only and unsaved quantity safeguards are retained.
