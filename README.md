@@ -2,6 +2,40 @@
 
 Local browser workspace for managing model builds, starting with Kitten 745 print production. Attributed to **IntegratedSA LLC**. The desktop application uses a section → 3MF → plate → part tree, saved plate preparation, print history, explicit acceptance of completed parts, reference photos and rotatable model previews.
 
+## Server controls and local files
+
+Open **http://localhost:4174/** after starting the server. The current Windows application folder (repository root) is:
+
+```text
+C:\Users\Preston\.codex\.chatgpt-projects\g-p-6acd1d76509c8191ab0854ee45849623\build-desk
+```
+
+Double-click a launcher in that folder, or run its command from PowerShell in the same folder:
+
+| Launcher | Action | PowerShell command |
+|---|---|---|
+| `Start-Build-Desk.cmd` | Start and open the app | `node tools/start-app.mjs --open` |
+| `Stop-Build-Desk.cmd` | Stop the server | `node tools/control-app.mjs stop` |
+| `Restart-Build-Desk.cmd` | Restart and open the app | `node tools/start-app.mjs --restart --open` |
+| `Status-Build-Desk.cmd` | Show whether it is running | `node tools/control-app.mjs status` |
+
+Start is safe when the app is already running. Closing the browser leaves the server running. The server is manually launched, is not a Windows service, and does not automatically start after reboot or sign-out. You can create desktop shortcuts to these launchers.
+
+All paths below are relative to the application folder above:
+
+| Location | Contents |
+|---|---|
+| `web/src` | Application source code |
+| `web/server.mjs` | Server entry point |
+| `tools` | Supporting scripts |
+| `local-data/kitten-745/Master Tracker.xlsx` | **Active runtime Excel tracker** |
+| `local-data/kitten-745/backups` | Workbook backups |
+| `config/builds.json` | Configuration selecting the workbook |
+| `local-data/app.log` and `local-data/app.err.log` | Server logs |
+| `local-data/app.pid` | Process ID recorded by the launcher |
+
+The workbook is local and does not synchronize with Google Sheets. **Runtime data and workbook backups are Git-excluded**, so back them up separately from source code. **Close Excel before saving through Build Desk.**
+
 ## Open the application
 
 Double-click **Start-Build-Desk.cmd** in this folder. It starts the app in the background and opens **http://127.0.0.1:4174/**. Keep this Windows PC running while using it. Node.js 22 or newer is required; the installed development environment uses Node.js 24.
