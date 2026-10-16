@@ -10,7 +10,7 @@
       "assets": {"root": "assets/generated", "catalog": "catalog.json", "references": "references.json", "renderer": "C:/Users/Preston/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe"},
       "models": {"directory": "\\\\IBFNAS\\Preston\\BambuProjects\\RC_DumpTruck", "bambuExecutable": "C:/Program Files/Bambu Studio/bambu-studio.exe"},
       "workflow": {"defaultProfile": "Dump Truck Settings", "materials": ["PETG", "PETG HF", "TPU — reviewed Bambu default"], "maxPrintingJobs": 1},
-      "modules": ["printing"]
+      "modules": ["printing", "purchasing"]
     }
   ]
 }

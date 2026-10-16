@@ -44,7 +44,7 @@ The active workbook is **local-data/kitten-745/Master Tracker.xlsx**. Its comple
 
 Home-network clients can view last recorded status using this PC's LAN address on port 4174 when Windows networking permits it. Editing and file actions are restricted to the host's loopback address. Phone layouts are for review only. The app is intended for a trusted home network, not Internet publication or a reverse proxy.
 
-See [UAT_CHECKLIST.md](UAT_CHECKLIST.md) for the first real print walk-through and [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md) for verified behavior and remaining limits. Read-only H2D monitoring is configured locally; Purchasing and Assembly are reserved modules.
+See [UAT_CHECKLIST.md](UAT_CHECKLIST.md) for the first real print walk-through and [IMPLEMENTATION_REPORT.md](IMPLEMENTATION_REPORT.md) for printing behavior and remaining limits. Read-only H2D monitoring is configured locally. Purchasing now provides a local overview, parts/orders, manual purchases, receipt entry and audited quantity corrections. Its Drive order-update connection still requires host authorization and real end-to-end acceptance; see [Purchasing implementation](docs/purchasing/implementation.md). Assembly remains reserved.
 
 ## Printer status
 

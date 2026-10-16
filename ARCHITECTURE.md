@@ -1,6 +1,6 @@
 # Build Desk architecture
 
-Build Desk is a local browser application owned by IntegratedSA LLC. It runs on the Windows host using Node.js, TypeScript, Next.js and React. There is no Google Cloud account, database server, paid runtime service or cloud authentication in the application.
+Build Desk is a local browser application owned by IntegratedSA LLC. It runs on the Windows host using Node.js, TypeScript, Next.js and React. Local work needs no database server or paid runtime service. Optional Purchasing queue ingestion uses a separately authorized direct Google Drive connection; it cannot inherit ChatGPT connector credentials.
 
 ## Build isolation and extensibility
 
@@ -34,4 +34,4 @@ Plate tables and part details share required/installed quantities. Table edits s
 
 The local printer provider maintains one read-only MQTT status subscription per configured physical printer. It validates the certificate chain against a locally stored printer CA and the certificate identity against the configured serial number. It implements connect, report subscription, keepalive, acknowledgements and disconnect; no printer-command publisher is provided. Credentials and CA/provenance live under ignored local-data/printers; APIs return only selected status fields, never connection credentials or serial numbers. The initial H2D test succeeded in cloud-connected mode on firmware 01.04.00.00 without changing printer modes.
 
-The provider writes atomic status snapshots separately from Excel. Desktop views fetch that small status endpoint every ten seconds while visible; observations older than thirty seconds or disconnected feeds are labeled stale. Printer-reported job, progress and remaining time never start/finish a tracked job or accept parts. Mobile retains the recorded-information-only view without polling device telemetry. Purchasing and Assembly are reserved shell modules, not implemented workflows.
+The provider writes atomic status snapshots separately from Excel. Desktop views fetch that small status endpoint every ten seconds while visible; observations older than thirty seconds or disconnected feeds are labeled stale. Printer-reported job, progress and remaining time never start/finish a tracked job or accept parts. Mobile retains the recorded-information-only view without polling device telemetry. Purchasing adds purchased parts/orders, explicit receipts, audited inventory adjustments and a Drive queue consumer through the same store boundary. Its schema, authorization readiness gates and recovery limitations are documented in docs/purchasing/implementation.md. Assembly remains reserved.
