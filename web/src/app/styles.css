@@ -27,3 +27,4 @@
 .tree-label{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tree-row button:not(.disclosure){gap:6px}.tree-completion{padding-left:0}
 .part-heading-number{font-size:12px;font-weight:400;letter-spacing:.08em;color:var(--muted);white-space:nowrap;vertical-align:middle}
 .tree-decorators{display:inline-flex;align-items:center;justify-content:flex-end;gap:7px;margin-left:auto;flex:none}.tree-decorators .tree-completion{margin-left:0}.tree-active-print{display:inline-flex;align-items:center;color:var(--green);flex:none}.active-print-name,.tree-row button.selected .active-print-name{font-weight:700;color:var(--green)}.review-plate-trigger{min-height:30px;cursor:pointer;background:transparent}.review-plate-trigger:focus-visible{outline:2px solid var(--yellow);outline-offset:3px}
+.badge.printing-status{color:var(--green);border-color:var(--green);background:#76d5a51a;font-weight:600}.inspection-help{max-width:850px;line-height:1.5}
